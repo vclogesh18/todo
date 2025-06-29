@@ -2,7 +2,19 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-analytics.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+import { getFirestore,
+  doc,
+  collection,
+  addDoc,
+  getDocs,
+  deleteDoc,
+  updateDoc,
+  onSnapshot,
+  query,
+  orderBy } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+
+let userId = null;
+let unsubscribeTasks = null; // for realtime updates
 
 const firebaseConfig = {
   apiKey: "AIzaSyCU45wbU1CpPsfLpzGGQ8BFMA-DFhWr6KU",
@@ -31,15 +43,14 @@ function getTaskIndexById(id) {
   return tasks.findIndex(t => t.id === id);
 }
 
-function loadTasks() {
-  const stored = localStorage.getItem("tasks");
-  tasks = stored ? JSON.parse(stored) : [];
-  tasks.forEach((task) => {
-    if (!task.id) {
-      task.id = Date.now() + Math.floor(Math.random() * 1000);
-    }
+async function loadTasksFromFirestore() {
+  if (!userId) return;
+
+  const q = query(collection(db, "users", userId, "tasks"), orderBy("createdAt", "desc"));
+  unsubscribeTasks = onSnapshot(q, (snapshot) => {
+    tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    renderTasks();
   });
-  saveTasks();
 }
 
 function renderTasks() {
@@ -97,22 +108,13 @@ function renderTasks() {
   });
 }
 
-function markDone(id) {
-  const index = getTaskIndexById(id);
-  if (index !== -1) {
-    tasks[index].done = true;
-    saveTasks();
-    renderTasks();
-  }
+async function markDone(id) {
+  const taskRef = doc(db, "users", userId, "tasks", id);
+  await updateDoc(taskRef, { done: true });
 }
 
-function removeTask(id) {
-  const index = getTaskIndexById(id);
-  if (index !== -1) {
-    tasks.splice(index, 1);
-    saveTasks();
-    renderTasks();
-  }
+async function removeTask(id) {
+  await deleteDoc(doc(db, "users", userId, "tasks", id));
 }
 
 function enableDualEdit(container, id) {
@@ -202,15 +204,19 @@ function handleImport() {
   reader.readAsText(file);
 }
 
-function addTask() {
+async function addTask() {
   const input = document.getElementById("taskInput");
   const dueInput = document.getElementById("dueDateInput");
   const name = input.value.trim();
   const dueDate = dueInput.value;
-  if (name) {
-    tasks.push({ id: Date.now(), name, dueDate, done: false });
-    saveTasks();
-    renderTasks();
+
+  if (name && userId) {
+    await addDoc(collection(db, "users", userId, "tasks"), {
+      name,
+      dueDate,
+      done: false,
+      createdAt: new Date()
+    });
     input.value = "";
     dueInput.value = "";
   }
@@ -283,11 +289,14 @@ window.addEventListener("DOMContentLoaded", () => {
     const app = document.getElementById("app");
     const authSection = document.getElementById("auth-section");
     if (user) {
+      userId = user.uid;
       authSection.style.display = "none";
       app.style.display = "block";
-      loadTasks();
-      renderTasks();
+      loadTasksFromFirestore();
+     // renderTasks();
     } else {
+      userId = null;
+      if (unsubscribeTasks) unsubscribeTasks();
       authSection.style.display = "block";
       app.style.display = "none";
     }
