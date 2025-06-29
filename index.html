@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>To-Do App</title>
+  <script type="module" src="app.js"></script>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      padding: 20px;
+      background-color: #f7f9fc;
+      color: #222;
+      transition: background 0.3s, color 0.3s;
+    }
+  
+    body.dark {
+      background-color: #121212;
+      color: #f0f0f0;
+    }
+  
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+  
+    input[type="text"], input[type="date"], select {
+      padding: 8px;
+      margin: 5px 5px 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+      width: 180px;
+    }
+  
+    button {
+      padding: 8px 12px;
+      margin: 5px 5px 10px 0;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      font-size: 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+  
+    button:hover {
+      background-color: #0056b3;
+    }
+  
+    input[type="file"] {
+      margin-top: 5px;
+    }
+  
+    body.dark input, body.dark select, body.dark button {
+      background-color: #222;
+      color: #f0f0f0;
+      border: 1px solid #444;
+    }
+  
+    ul#taskList {
+      list-style: none;
+      padding-left: 0;
+    }
+  
+    li {
+      background: #ffffff;
+      margin: 6px 0;
+      padding: 12px;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background-color 0.3s;
+    }
+  
+    body.dark li {
+      background: #1e1e1e;
+    }
+  
+    li span {
+      flex: 1;
+    }
+  
+    li span.done {
+      text-decoration: line-through;
+      color: #28a745;
+    }
+  
+    li span.overdue {
+      color: #dc3545;
+      font-weight: bold;
+    }
+  
+    li button {
+      background-color: #6c757d;
+    }
+  
+    li button:hover {
+      background-color: #5a6268;
+    }
+  
+    li button:first-of-type {
+      background-color: #28a745;
+    }
+  
+    li button:first-of-type:hover {
+      background-color: #218838;
+    }
+  
+    li button:last-of-type {
+      background-color: #dc3545;
+    }
+  
+    li button:last-of-type:hover {
+      background-color: #c82333;
+    }
+  
+    @media (max-width: 500px) {
+      input, select, button {
+        width: 100%;
+        margin: 5px 0;
+      }
+  
+      li {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+  
+      li button {
+        margin-top: 6px;
+      }
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0; top: 0;
+        width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-content {
+        background: #fff;
+        padding: 20px;
+        margin: 10% auto;
+        width: 90%;
+        max-width: 400px;
+        border-radius: 8px;
+        text-align: center;
+    }
+
+    .modal-content input {
+        width: 100%;
+        margin: 8px 0;
+        padding: 8px;
+    }
+
+    .modal-buttons {
+        margin-top: 10px;
+    }
+
+    .modal-buttons button {
+        width: 45%;
+        margin: 5px;
+    }
+
+    body.dark .modal-content {
+        background: #1e1e1e;
+        color: #fff;
+    }
+
+    .task-info {
+  flex: 1;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.task-info small {
+  color: #888;
+  font-size: 12px;
+  display: block;
+}
+
+.task-actions {
+  display: flex;
+  gap: 6px;
+  margin-left: 12px;
+}
+
+.task-actions button {
+  padding: 6px 10px;
+  font-size: 13px;
+  border-radius: 4px;
+}
+
+.done-btn {
+  background-color: #28a745;
+}
+
+.done-btn:hover {
+  background-color: #218838;
+}
+
+.remove-btn {
+  background-color: #dc3545;
+}
+
+.remove-btn:hover {
+  background-color: #c82333;
+}
+.done {
+  text-decoration: line-through;
+  opacity: 0.6;
+  color: #28a745;
+}
+
+.edit-input {
+  font-size: 15px;
+  padding: 5px;
+  border: 1px solid #aaa;
+  border-radius: 4px;
+}
+
+.edit-input {
+  font-size: 15px;
+  padding: 5px;
+  margin-bottom: 4px;
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.edit-wrapper {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.edit-input, .inline-date {
+  font-size: 14px;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.overdue {
+  color: #d93025; /* Google-style warning red */
+  font-weight: bold;
+}
+
+.overdue small {
+  color: #d93025;
+}
+  </style>
+</head>
+<body>
+    <h1>📝 To-Do App</h1>
+  
+    <div id="auth-section">
+      <input type="email" id="email" placeholder="Email" />
+      <input type="password" id="password" placeholder="Password" />
+      <button id="loginBtn">Login</button>
+      <button id="signupBtn">Sign Up</button>
+    </div>
+    
+    <div id="app" style="display:none;">
+      <input id="searchInput" type="text" placeholder="Search..." />
+      <select id="statusFilter">
+        <option value="all">Show All</option>
+        <option value="overdue">Overdue</option>
+        <option value="pending">Due Soon</option>
+        <option value="done">Completed</option>
+      </select>
+      <button id="darkModeBtn">🌙 Toggle Dark Mode</button>
+      <button id="exportBtn">💾 Export</button>
+      <button id="importBtn">📥 Import Tasks</button>
+      <button id="logoutBtn">🚪 Logout</button>
+  
+      <div id="importModal" class="modal">
+        <div class="modal-content">
+          <h3>Import Tasks (JSON)</h3>
+          <input type="file" id="importFile" />
+          <div class="modal-buttons">
+            <button id="confirmImportBtn">Import</button>
+            <button id="cancelImportBtn">Cancel</button>
+          </div>
+        </div>
+      </div>
+  
+      <br /><br /><br />
+  
+      <input id="taskInput" type="text" placeholder="Task name" />
+      <input id="dueDateInput" type="date" />
+      <button id="addTaskBtn">➕ Add Task</button>
+  
+      <br />
+      <ul id="taskList"></ul>
+    </div>
+  </body>
+</html>
